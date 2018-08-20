@@ -1002,6 +1002,42 @@ drawHeart:function (ctx, x, y, angle, clockWise, size) {
         ctx.bezierCurveTo(coords[2].x, coords[2].y, coords[1].x, coords[1].y, coords[0].x, coords[0].y);
     }
 },
+CScoords:[
+    {"r": 0.555, "a": 0}, //LMs1
+    {"r": 0.9852040604952491, "a": -0.2866651644830285},
+    {"r": 1.2707674846328103, "a": -0.8745467167362944},
+    {"r": 0.9202698278887822, "a": -1.3905262905274975},
+    {"r": 0.9079886383358213, "a": 4.310699331693366},
+    {"r": 0.6941185130826591, "a": 3.343629956086594},
+    {"r": 1, "a": 3.14}, //LMs2
+    {"r": 0.6941185130826591, "a": 2.9395553510929924},
+    {"r": 0.9079886383358211, "a": 1.972485975486221},
+    {"r": 0.9202698278887824, "a": 1.3905262905274975},
+    {"r": 1.2707674846328103, "a": 0.8745467167362944},
+    {"r": 0.9852040604952491, "a": 0.28666516448302826}
+],
+drawCustom:function (ctx, x, y, angle, clockWise, size) {
+    var CScoords = [],
+            point = new Point(x, y),
+            radius = size * this.radius;
+    for (var i in this.heartCoords) {
+        var CScoord = this.heartCoords[i];
+        CScoords.push(point.clone().move(radius * CScoord.r, CScoord.a + angle));
+    }
+    if (!clockWise) {
+        ctx.moveTo(CScoords[0].x, CScoords[0].y);
+        ctx.bezierCurveTo(CScoords[1].x, CScoords[1].y, CScoords[2].x, CScoords[2].y, CScoords[3].x, CScoords[3].y);
+        ctx.bezierCurveTo(CScoords[4].x, CScoords[4].y, CScoords[5].x, CScoords[5].y, CScoords[6].x, CScoords[6].y);
+        ctx.bezierCurveTo(CScoords[7].x, CScoords[7].y, CScoords[8].x, CScoords[8].y, CScoords[9].x, CScoords[9].y);
+        ctx.bezierCurveTo(CScoords[10].x, CScoords[10].y, CScoords[11].x, CScoords[11].y, CScoords[0].x, CScoords[0].y);
+    } else {
+        ctx.moveTo(CScoords[0].x, CScoords[0].y);
+        ctx.bezierCurveTo(CScoords[11].x, CScoords[11].y, CScoords[10].x, CScoords[10].y, CScoords[9].x, CScoords[9].y);
+        ctx.bezierCurveTo(CScoords[8].x, CScoords[8].y, CScoords[7].x, CScoords[7].y, CScoords[6].x, CScoords[6].y);
+        ctx.bezierCurveTo(CScoords[5].x, CScoords[5].y, CScoords[4].x, CScoords[4].y, CScoords[3].x, CScoords[3].y);
+        ctx.bezierCurveTo(CScoords[2].x, CScoords[2].y, CScoords[1].x, CScoords[1].y, CScoords[0].x, CScoords[0].y);
+    }
+},
 /**
  * Draw simple Xsided shape.
  */

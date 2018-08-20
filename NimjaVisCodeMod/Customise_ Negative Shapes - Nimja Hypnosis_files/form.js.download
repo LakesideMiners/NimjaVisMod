@@ -1,0 +1,499 @@
+var form;
+var textMap = {
+    c:'textColor',
+    b:'textBg',
+    f:'flash',
+    s:'lineSpeed',
+    t:'lineTime'
+};
+function parseJsonData(data) {
+    if (!data) {
+        return {};
+    }
+    var config;
+    if (typeof data === 'object') {
+        config = data;
+    } else {
+        config = JSON.parse(data);
+    }
+    return config;
+}
+function Form() {
+    var t = this;
+    this.$form = $('#visual-form');
+    this.$presets = $('#colorPresets');
+    this.techId = parseInt($('#visual-form input[name=techId]').val());
+    this.defaults = parseJsonData($('#visual-defaults').data('defaults'));
+    this.lineSelect = new LineSelect();
+    this.customize = new Customize(t.defaults, t.techId, t.lineSelect);
+    this.hasGradient = $("input[name ='gradient']").length > 0;
+    this.update = function(e) {
+        t.lineSelect.update();
+        t.updateGradient();
+        t.customize.updateLink(t.getData());
+    };
+    this.submit = function(event) {
+        event.preventDefault();
+        t.update();
+        $('.visual-form-submit').first().click();
+    };
+    this.updateGradient = function() {
+        if (!t.hasGradient) {
+            return;
+        }
+        var val = parseInt($("input[name ='gradient']:checked").val()) + 2;
+        if (val > 2) {
+            $('#visual-gradient-reverse').show();
+        } else {
+            $('#visual-gradient-reverse').hide();
+        }
+        for (var i = 2; i <= t.defaults.gradientMax; i++) {
+            var $obj = $('#color' + i).parent().parent();
+            if (i < val) {
+                $obj.show();
+            } else {
+                $obj.hide();
+            }
+        }
+    };
+    this.getData = function() {
+        var data = t.$form.serializeArray();
+        var result = {};
+        for (var index in data) {
+            var obj = data[index];
+            result[obj.name] = obj.value;
+        }
+        result.lines = t.lineSelect.curText;
+        return result;
+    };
+    this.getColorCount = function() {
+        return parseInt($("input[name ='gradient']:checked").val()) + 1;
+    };
+    this.reverseGradient = function() {
+        var colors = [];
+        var count = t.getColorCount();
+        for (var i = 1; i <= count; i++) {
+            colors.push($('#color' + i).val());
+        }
+        for (var i = 1; i <= count; i++) {
+            $('#color' + i).val(colors[count - i]);
+        }
+        t.update();
+    };
+    this.selectPreset = function(event) {
+        event.preventDefault();
+        var preset = t.$presets.val();
+        if (preset.length > 1) {
+            var colors = preset.toString().split('-');
+            var count = colors.length;
+            t.updateRadioOrSelect('gradient', count - 1);
+            for (var i = 1; i <= count; i++) {
+                $('#color' + i).val('#' + colors[i - 1]);
+            }
+            t.update();
+        }
+    };
+    this.resetVisual = function() {
+        t.updateRadioOrSelect('gradient', parseInt(t.defaults.gradient));
+        for (var i = 1; i <= t.defaults.gradientMax; i++) {
+            var name = 'color' + i;
+            t.updateBasicField('input', name, t.defaults[name]);
+        }
+        for (var name in t.defaults.config) {
+            t.updateRadioOrSelect('config\\[' + name + '\\]', t.defaults.config[name]);
+        }
+        t.updateCheckBox('cam', t.defaults.cam);
+        t.update();
+    };
+    this.resetText = function() {
+        t.lineSelect.setValues(t.defaults.set);
+        t.updateBasicField('textarea', 'lines', t.defaults.lines);
+        t.updateBasicField('input', 'textColor', t.defaults.textColor);
+        t.updateBasicField('input', 'textBg', t.defaults.textBg);
+        t.updateCheckBox('flash', t.defaults.flash);
+        t.updateBasicField('input', 'lineSpeed', t.defaults.lineSpeed);
+        t.updateBasicField('input', 'lineTime', t.defaults.lineTime);
+        t.update();
+    };
+    this.updateBasicField = function(type, name, value) {
+        $('' + type + '[name=' + name + ']').val(value);
+    };
+    this.updateCheckBox = function(name, value) {
+        var $checkBox = $('input[name=' + name + ']');
+        if (value) {
+            $checkBox.attr('checked', 'checked');
+        } else {
+            $checkBox.prop('checked', false);
+        }
+    };
+    this.updateSelect = function(name, value) {
+        $('select[name=' + name + '] option').removeAttr('selected');
+        $('select[name=' + name + '] option[value=' + value + ']').attr('selected', 'selected');
+    };
+    this.updateRadioOrSelect = function(name, value) {
+        var $input = $('input[name=' + name + ']');
+        if ($input.length) {
+            if ($input.attr('type') == 'radio') {
+                t.updateRadio(name, $input, value);
+            } else {
+                $input.val(value);
+            }
+        } else {
+
+            t.updateSelect(name, value);
+        }
+    };
+    this.updateRadio = function(name, $field, value) {
+        $field.prop('checked', false);
+        var cleanValue = value.toString().replace(/^0\./, '.');
+        $('input[name=' + name + '][value="' + cleanValue + '"]').prop('checked', true);
+    };
+    this.enablePreview = function() {
+        var $parent = $('#visual-current');
+        $parent.empty();
+        $parent.append('<div class="embed-responsive embed-responsive-16by9">Test</div>');
+        $parent.children('div').append('<iframe class="embed-responsive-item" id="visual-preview-frame" src="" allowfullscreen="1"></iframe>');
+        t.customize.updateLink(t.getData());
+    };
+    this.$form.change(t.update);
+    this.$form.submit(t.submit);
+    this.$presets.change(t.selectPreset);
+    t.updateGradient();
+    t.customize.updateLink(t.getData());
+}
+function LineSelect()
+{
+    var t = this;
+    this.$checkBoxes = $('input[name=set\\[\\]]');
+    this.$text = $('#linesText');
+    this.$textHolder = t.$text.parent().parent();
+    this.curSet = 'default';
+    this.curText = t.$text.val().toString();
+    this.init = function () {
+        t.$checkBoxes.change(t.update);
+//        t.$text.bind('input keyup paste propertychange', t.updateText);
+        t.$text.bind('blur', t.updateText);
+        t.update();
+    };
+    this.update = function () {
+        t.updateSet();
+    };
+    this.updateSet = function() {
+        var sets = [];
+        t.$checkBoxes.each(function(index, cur) {
+            var $cur = $(cur);
+            if ($cur.prop("checked")) {
+                sets.push($cur.val().toString());
+            }
+        });
+        t.curSet = sets.join('-');
+    };
+    this.setValues = function (values) {
+        var sets = [];
+        t.$checkBoxes.each(function (index, cur) {
+            var $cur = $(cur);
+            $cur.prop("checked", false);
+            if (values.indexOf($cur.val().toString()) > -1) {
+                $cur.prop("checked", true);
+            }
+        });
+        t.curSet = sets.join('-');
+    };
+    this.updateText = function() {
+        var newText = t.$text.val();
+        if (newText != t.curText) {
+            t.curText = newText;
+            t.$text.trigger('change');
+            t.$text.val(newText);
+        }
+    };
+    this.getLines = function() {
+        var lines = t.curText;
+        lines = lines.replace(/\r\n|\r|\n/g, "-");
+        lines = lines.replace(/\s+/g, ' ');
+        lines = lines.replace(/\ *\-\ */g, '-');
+        lines = lines.replace(/\-{3,}/g, '--');
+        lines = lines.replace(/\-{2,}/g, '-');
+        return lines;
+    };
+    this.init();
+}
+function LineSelect_Old()
+{
+    var t = this;
+    var CUSTOM = 'custom';
+    this.$select = $('#linesSelect');
+    this.$text = $('#linesText');
+    this.$textHolder = t.$text.parent().parent();
+    this.curSelect = t.$select.val().toString();
+    this.curText = t.$text.val().toString();
+    this.isCustom = (t.curSelect === CUSTOM);
+    this.init = function () {
+        t.$select.change(t.update);
+//        t.$text.bind('input keyup paste propertychange', t.updateText);
+        t.$text.bind('blur', t.updateText);
+        t.update();
+    };
+    this.update = function () {
+        var value = t.$select.val().toString();
+        if (value !== t.curSelect) {
+            t.curSelect = value;
+            t.isCustom = (t.curSelect === CUSTOM);
+        }
+        t.$text.parent().parent().toggle(t.isCustom);
+    };
+    this.updateText = function() {
+        var newText = t.$text.val();
+        if (newText != t.curText) {
+            t.curText = newText;
+            t.$text.trigger('change');
+            t.$text.val(newText);
+        }
+    };
+    this.getLines = function() {
+        if (!t.curSelect || (t.isCustom && !t.curText)) {
+            return false;
+        } else if (!t.isCustom) {
+            return t.curSelect;
+        } else {
+            var lines = t.curText;
+            lines = lines.replace(/\r\n|\r|\n/g, "-");
+            lines = lines.replace(/\s+/g, ' ');
+            lines = lines.replace(/\ *\-\ */g, '-');
+            lines = lines.replace(/\-{3,}/g, '--');
+            lines = lines.replace(/\-{2,}/g, '-');
+            return lines;
+        }
+    };
+    this.init();
+}
+function Customize(defaults, techId, lineSelect) {
+    var t = this;
+    this.defaults = defaults;
+    this.techId = techId;
+    this.lineSelect = lineSelect;
+    this.updateLink = function(formData)
+    {
+        var values = t.getValuesObject(formData);
+        var isRemote = !!formData.remote;
+        if (isRemote) {
+            values.cast = 1;
+        }
+        var $submit = $('.visual-form-submit');
+        var linkUrl = t.getFullUrl(values);
+        $submit.attr('href', linkUrl);
+        $('#visual-share').val(window.location.protocol + "//" + window.location.host + linkUrl);
+        if (isRemote) {
+            $submit.attr('target', 'remoteControl');
+        } else {
+            $submit.removeAttr('target');
+        }
+        var $preview = $('#visual-preview-frame');
+        if ($preview.length > 0) {
+            values.cast = 1;
+            $preview.attr('src', t.getFullUrl(values));
+        }
+    };
+    this.getFullUrl = function(values)
+    {
+        var url = '/visual/' + t.defaults.id;
+        t.getFullUrlConfigCollapse(values);
+        t.getFullUrlTextCollapse(values);
+        t.getFullUrlLinesToLast(values);
+        var params = $.param(values);
+        if (params) {
+            url += '?' + params.replace(/\%5B/g, '[').replace(/\%5D/g, ']');
+        }
+        return url;
+    };
+    this.getFullUrlTextCollapse = function(values)
+    {
+        var t = [];
+        var hasText = false;
+        for(var letter in textMap) {
+            var name = textMap[letter];
+            if (values.hasOwnProperty(name)) {
+                hasText = true;
+                t.push(letter + values[name]);
+                delete values[name];
+            }
+        }
+        if (hasText) {
+            values.t = t.join('-');
+        }
+    };
+    this.getFullUrlConfigCollapse = function(values)
+    {
+        var c = [];
+        var hasConfig = false;
+        for (var name in t.defaults.config) {
+            var fieldName = t.getConfigFieldName(name);
+            if (!values.hasOwnProperty(fieldName)) {
+                continue;
+            }
+            hasConfig = true;
+            c.push(name + values[fieldName]);
+            delete values[fieldName];
+        }
+        if (hasConfig) {
+            values.c = c.join('-');
+        }
+    };
+    this.getFullUrlLinesToLast = function(values)
+    {
+        if (values.hasOwnProperty('lines')) {
+            var lines = values.lines;
+            delete values.lines;
+            values.lines = lines;
+        }
+    };
+    this.getValuesObject = function(formData, defaults)
+    {
+        var values = {};
+        if (t.techId > 1) {
+            t.setColors(values, formData);
+            t.setConfigs(values, formData);
+        }
+        t.setColor(values, formData, 'textColor');
+        t.setColor(values, formData, 'textBg');
+        t.setCheckBox(values, formData, 'flash');
+        t.setValue(values, formData, 'lineSpeed');
+        t.setValue(values, formData, 'lineTime');
+        t.setCheckBox(values, formData, 'cam');
+        t.setLines(values, formData);
+        return values;
+    };
+    this.getColor = function(formData, name, defaultValue)
+    {
+        var result = false;
+        if (!formData.hasOwnProperty(name)) {
+            return result;
+        }
+        var cur = formData[name].toString().toLowerCase();
+        if (cur != defaultValue) {
+            result = t.cleanColor(cur);
+        }
+        return result;
+    };
+    this.setColor = function(values, formData, name)
+    {
+        var color = t.getColor(formData, name, t.defaults[name]);
+        if (color) {
+            values[name] = color;
+        }
+    };
+    this.setColors = function(values, formData)
+    {
+        var result, colors = [];
+        for (var i = 1; i <= t.defaults.gradientMax; i++) {
+            colors.push(t.getColor(formData, 'color' + i, false));
+        }
+        var gradient = formData.hasOwnProperty('gradient') ? parseInt(formData.gradient) : 0;
+        result = t.createColorString(gradient, colors);
+        if (result != t.defaultColorString) {
+            values.color = result;
+        }
+    };
+    this.cleanColor = function (color)
+    {
+        var result = color;
+        if (color[0] == '#') {
+            result = color.substr(1);
+        }
+        return result;
+    };
+    this.createColorString = function(gradient, colorArray)
+    {
+        var colors = colorArray.slice(0, gradient + 1);
+        return colors.join('-');
+    };
+    this.setValue = function(values, formData, name)
+    {
+        if (!formData.hasOwnProperty(name)) {
+            return;
+        }
+        var cur = parseInt(formData[name]);
+        if (cur != t.defaults[name] && cur > -1) {
+            values[name] = cur;
+        }
+    };
+    this.setCheckBox = function(values, formData, name)
+    {
+        if (!formData.hasOwnProperty(name)) {
+            return;
+        }
+        values[name] = 1;
+    };
+    this.getConfigFieldName = function(name)
+    {
+        return 'config[' + name + ']';
+    };
+    this.setConfigs = function(values, formData)
+    {
+        for (var name in t.defaults.config) {
+            var fieldName = t.getConfigFieldName(name);
+            if (!formData.hasOwnProperty(fieldName)) {
+                continue;
+            }
+            if (t.defaults.config[name] != formData[fieldName]) {
+                values[fieldName] = formData[fieldName];
+            }
+        }
+    };
+    this.setLines = function(values, formData) {
+        var lines = t.lineSelect.getLines();
+        if (!t.lineSelect.curSet && !lines) {
+            values.set = 'none';
+            return;
+        }
+        if (t.lineSelect.curSet == 'default' && !lines) {
+            return;
+        }
+        if (t.lineSelect.curSet) {
+            values.set = t.lineSelect.curSet;
+        }
+        if (lines) {
+            values.lines = lines;
+        }
+    };
+    this.createDefaultColorString = function() {
+        var colors = [];
+        for (var i = 1; i <= t.defaults.gradientMax; i++) {
+            colors.push(t.cleanColor(t.defaults['color' + i]));
+        }
+        this.defaultColorString = t.createColorString(t.defaults.gradient, colors);
+    };
+    t.createDefaultColorString();
+}
+
+$(function () {
+    form = new Form();
+    $('#visual-reset-visual').click(function(event) {
+        event.preventDefault();
+        form.resetVisual();
+    });
+    $('#visual-reset-text').click(function(event) {
+        event.preventDefault();
+        form.resetText();
+    });
+    $('#visual-gradient-reverse').click(function(event) {
+        event.preventDefault();
+        form.reverseGradient();
+    });
+    $('.visual-preview').click(function(event) {
+        event.preventDefault();
+        form.enablePreview();
+    });
+    $("#visual-share").on('focus', function() {
+    var $this = $(this)
+        .one('mouseup.mouseupSelect', function() {
+            $this.select();
+            return false;
+        })
+        .one('mousedown', function() {
+            // compensate for untriggered 'mouseup' caused by focus via tab
+            $this.off('mouseup.mouseupSelect');
+        })
+        .select();
+    });
+});
