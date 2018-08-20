@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Pendulum Mirror - Nimja Hypnosis</title>
+        
+        <meta name="description" content="A very wide-angled pendulum wave effect, with pendulums moving in a synchronised wave.">
+        <meta name="referrer" content="origin">
+        <meta name="author" content="Nimja.com">
+        <link rel="apple-touch-icon" sizes="57x57" href="https://hypno.nimja.com/apple-touch-icon-57x57.png">
+        <link rel="apple-touch-icon" sizes="60x60" href="https://hypno.nimja.com/apple-touch-icon-60x60.png">
+        <link rel="apple-touch-icon" sizes="72x72" href="https://hypno.nimja.com/apple-touch-icon-72x72.png">
+        <link rel="apple-touch-icon" sizes="76x76" href="https://hypno.nimja.com/apple-touch-icon-76x76.png">
+        <link rel="apple-touch-icon" sizes="114x114" href="https://hypno.nimja.com/apple-touch-icon-114x114.png">
+        <link rel="apple-touch-icon" sizes="120x120" href="https://hypno.nimja.com/apple-touch-icon-120x120.png">
+        <link rel="apple-touch-icon" sizes="144x144" href="https://hypno.nimja.com/apple-touch-icon-144x144.png">
+        <link rel="apple-touch-icon" sizes="152x152" href="https://hypno.nimja.com/apple-touch-icon-152x152.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="https://hypno.nimja.com/apple-touch-icon-180x180.png">
+        <link rel="icon" type="image/png" href="https://hypno.nimja.com/favicon-32x32.png" sizes="32x32">
+        <link rel="icon" type="image/png" href="https://hypno.nimja.com/android-chrome-192x192.png" sizes="192x192">
+        <link rel="icon" type="image/png" href="https://hypno.nimja.com/favicon-96x96.png" sizes="96x96">
+        <link rel="icon" type="image/png" href="https://hypno.nimja.com/favicon-16x16.png" sizes="16x16">
+        <link rel="manifest" href="https://hypno.nimja.com/manifest.json">
+        <meta name="apple-mobile-web-app-title" content="Nimja Hypnosis">
+        <meta name="application-name" content="Nimja Hypnosis">
+        <meta name="msapplication-TileColor" content="#405299">
+        <meta name="msapplication-TileImage" content="/mstile-144x144.png">
+        <meta name="theme-color" content="#405299">
+        <meta property="og:title" content="Pendulum Mirror - Nimja Hypnosis">
+        <meta property="og:description" content="A very wide-angled pendulum wave effect, with pendulums moving in a synchronised wave.">
+        <meta property="og:url" content="https://hypno.nimja.com/visual/60">
+        <meta property="og:image" content="https://hypno.nimja.com/visual/thumb/60.jpg">
+        <link rel="canonical" href="https://hypno.nimja.com/visual/60">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+        <script src=".\scripts\viewmod.js" type="application/javascript"></script>
+        <link href=".\scripts\visual.css" rel="stylesheet">
+        <style>
+            #text {
+                color: #ffffff;
+                text-shadow: 0px 0px 0.5vw #000000;
+            }
+            #textHolder {
+                background: transparent;
+            }
+        </style>
+    </head>
+    <body>
+        <table class="copyright">
+    <tbody><tr>
+        <td class="prev">
+            <a href="https://hypno.nimja.com/visual/61?set=none" id="mlink">◄</a>
+        </td>
+        <td>
+            <a href="https://hypno.nimja.com/visual/customise/60"><span>Back to </span>Nimja Hypnosis<span> / Customise - <i>Click lower half for full-screen.</i></span></a>
+        </td>
+        <td class="next">
+            <a href="https://hypno.nimja.com/visual/59?set=none">►</a>
+        </td>
+    </tr>
+</tbody></table>
+        <div id="textHolder" style="opacity: 0; display: none;"><span id="text">Loading...</span></div>
+        <div onclick="nimja.fullscreen.launch()" id="fullscreen"></div>
+
+<canvas id="canvas" width="387" height="740">Canvas not supported.</canvas>
+<script>
+    var cur = Date.now() - (Math.random() * 100000);
+    //Set up the animation.
+    function animate() {
+        words.update();
+        render.update((Date.now() - cur) / 1000);
+        nimjanimate(animate);
+    }
+    var words = new Words([], 30, 5);
+    config = new Config([]);
+    /**
+ * By Nimja - Pendulum Mirror, a variation of the pendulum wave effect.
+ * @param {element} canvas
+ * @param {array} colors
+ * @returns {Render}
+ */
+function Render(canvas, colors) {
+    var t = this;
+    this.canvas = canvas;
+    this.context = t.canvas.getContext('2d');
+    this.colors = colors;
+    this.pos = {x: 0, y: 0, w: 0, h: 0, canvas: {}};
+    this.angleMax = 1;
+    this.angleOffset = HPI;
+    var defaults = {
+        speed: {type: 'ratio'},
+        size: {type: 'ratio'},
+        amount: {type: 'ratio'}
+    };
+    this.settings = config.get(defaults);
+    this.settings.count = Math.round(t.settings.amount * 20);
+    this.pendulums = [];
+    this.update = function (time) {
+        var ctx = t.context;
+        ctx.clearRect(0, 0, t.pos.w, t.pos.h);
+        for (var i in t.pendulums) {
+            t.pendulums[i].draw(ctx, time);
+        }
+    };
+    this.resize = function (width, height) {
+        t.canvas.width = width;
+        t.canvas.height = height;
+        t.context.lineCap = "round";
+        t.context.lineJoin = "round";
+        t.pos.w = width;
+        t.pos.h = height;
+        t.pos.x = width / 2;
+        t.pos.y = height / 2;
+        t.pos.max = coordMath.distance(t.pos);
+        t.pos.length = t.pos.max * .7;
+        t.pos.yp = t.pos.y;
+        t.pos.size = t.pos.length * .09 * t.settings.size;
+        t.pos.fullAngle = Math.PI * .5;
+    };
+    for (var i = 0; i < t.settings.count; i++) {
+        var cur = (i / t.settings.count);
+        var pendulum = new Pendulum(t.pos, getIndex(t.colors, cur), cur);
+        pendulum.frequency *= t.settings.speed;
+        t.pendulums.push(pendulum);
+    }
+}
+
+function Pendulum(pos, color, dist) {
+    var t = this;
+    this.pos = pos;
+    this.color = color;
+    this.dist = dist;
+    this.size = .5 + dist * .5;
+    this.length = .05 + dist * .95;
+    this.angle = 1;
+    this.frequency = 2 + (1 - dist) ;
+    this.previous = {x: 0, y:0};
+    this.draw = function(ctx, time) {
+        ctx.strokeStyle = t.color;
+        ctx.lineWidth = t.pos.size * t.size;
+        var x, y, angle, length = t.length * t.pos.length;
+        angle = t.angle * t.pos.fullAngle * Math.sin(time * t.frequency) + Math.PI * .5;
+        x = t.pos.x + length * Math.cos(angle);
+        y = t.pos.yp + length * Math.sin(angle);
+        ctx.beginPath();
+        ctx.moveTo(t.previous.x, t.previous.y);
+        ctx.lineTo(x, y);
+        ctx.moveTo(t.previous.x, t.pos.h - t.previous.y);
+        ctx.lineTo(x, t.pos.h - y);
+        ctx.stroke();
+        t.previous.x = x;
+        t.previous.y = y;
+    };
+}
+    var render = new Render(document.getElementById('canvas'), ["#11ffff","#10fefe","#10fdfe","#10fcfd","#10fbfd","#10fbfc","#10fafc","#10f9fb","#10f8fb","#10f7fa","#10f7fa","#10f6f9","#10f5f9","#10f4f9","#10f4f8","#10f3f8","#10f2f7","#10f1f7","#0ff0f6","#0ff0f6","#0feff5","#0feef5","#0fedf4","#0fecf4","#0fecf3","#0febf3","#0feaf3","#0fe9f2","#0fe8f2","#0fe8f1","#0fe7f1","#0fe6f0","#0fe5f0","#0fe4ef","#0fe3ef","#0ee3ee","#0ee2ee","#0ee1ed","#0ee0ed","#0edfec","#0edfec","#0edeeb","#0eddeb","#0edceb","#0edbea","#0edaea","#0edae9","#0ed9e9","#0ed8e8","#0ed7e8","#0ed6e7","#0dd5e7","#0dd4e6","#0dd4e6","#0dd3e5","#0dd2e5","#0dd1e4","#0dd0e4","#0dcfe3","#0dcfe3","#0dcee2","#0dcde2","#0dcce1","#0dcbe1","#0dcae0","#0dc9e0","#0dc8e0","#0cc8df","#0cc7df","#0cc6de","#0cc5de","#0cc4dd","#0cc3dd","#0cc2dc","#0cc1dc","#0cc1db","#0cc0db","#0cbfda","#0cbeda","#0cbdd9","#0cbcd9","#0cbbd8","#0bbad8","#0bb9d7","#0bb8d7","#0bb8d6","#0bb7d6","#0bb6d5","#0bb5d5","#0bb4d4","#0bb3d4","#0bb2d3","#0bb1d3","#0bb0d2","#0bafd2","#0baed1","#0aadd1","#0aacd0","#0aabd0","#0aabcf","#0aaacf","#0aa9ce","#0aa8ce","#0aa7cd","#0aa6cd","#0aa5cc","#0aa4cc","#0aa3cb","#0aa2cb","#0aa1ca","#09a0ca","#099fc9","#099ec9","#099dc8","#099cc8","#099bc7","#099ac7","#0999c6","#0998c6","#0997c5","#0996c4","#0995c4","#0994c3","#0893c3","#0892c2","#0891c2","#0890c1","#088fc1","#088ec0","#088dc0","#088cbf","#088bbf","#088abe","#0889be","#0888bd","#0887bd","#0785bc","#0784bc","#0783bb","#0782bb","#0781ba","#0780b9","#077fb9","#077eb8","#077db8","#077cb7","#077bb7","#0779b6","#0678b6","#0677b5","#0676b5","#0675b4","#0674b4","#0673b3","#0671b2","#0670b2","#066fb1","#066eb1","#066db0","#056cb0","#056aaf","#0569af","#0568ae","#0567ae","#0566ad","#0564ac","#0563ac","#0562ab","#0561ab","#045faa","#045eaa","#045da9","#045ca9","#045aa8","#0459a7","#0458a7","#0456a6","#0455a6","#0354a5","#0352a5","#0351a4","#0350a3","#034ea3","#034da2","#034ba2","#034aa1","#0249a1","#0247a0","#02469f","#02449f","#02439e","#02419e","#01409d","#013e9d","#013c9c","#013b9b","#01399b","#01389a","#00369a","#003499","#003399"], ["#11ffff","#003399"]);
+    resize = render.resize;
+    nimja.callResize();
+    nimjanimate(animate);
+</script>
+
+
+    
+
+
+
+
+</body></html>

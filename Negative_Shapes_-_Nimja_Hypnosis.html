@@ -1,0 +1,276 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Negative Shapes - Nimja Hypnosis</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="description" content="Multiple layers of configurable shapes, moving around and towards you." />
+        <meta name="referrer" content="origin"/>
+        <meta name="author" content="Nimja.com" />
+        <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png"/>
+        <link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.png"/>
+        <link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.png"/>
+        <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.png"/>
+        <link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon-114x114.png"/>
+        <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png"/>
+        <link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144x144.png"/>
+        <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png"/>
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png"/>
+        <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32"/>
+        <link rel="icon" type="image/png" href="/android-chrome-192x192.png" sizes="192x192"/>
+        <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96"/>
+        <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16"/>
+        <link rel="manifest" href="/manifest.json"/>
+        <meta name="apple-mobile-web-app-title" content="Nimja Hypnosis"/>
+        <meta name="application-name" content="Nimja Hypnosis"/>
+        <meta name="msapplication-TileColor" content="#405299"/>
+        <meta name="msapplication-TileImage" content="/mstile-144x144.png"/>
+        <meta name="theme-color" content="#405299"/>
+        <meta property="og:title" content="Negative Shapes - Nimja Hypnosis"/>
+        <meta property="og:description" content="Multiple layers of configurable shapes, moving around and towards you."/>
+        <meta property="og:url" content="https://hypno.nimja.com/visual/64"/>
+        <meta property="og:image" content="https://hypno.nimja.com/visual/thumb/64.jpg" />
+        <link rel="canonical" href="https://hypno.nimja.com/visual/64">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+        <script src=".\scripts\viewmod.js" type="application/javascript"></script>
+        <link href=".\scripts\visual.css" rel="stylesheet" />
+        <style>
+            #text {
+                color: #ffffff;
+                text-shadow: 0px 0px 0.5vw #000000;
+            }
+            #textHolder {
+                background: transparent;
+            }
+        </style>
+    </head>
+    <body>
+        <table class="copyright">
+    <tr>
+        <td class="prev">
+            <a href="/visual/65?set=none&c=shape2" id="mlink">&#9668;</a>
+        </td>
+        <td>
+            <a href="/visual/customise/64"><span>Back to </span>Nimja Hypnosis<span> / Customise - <i>Click lower half for full-screen.</i></span></a>
+        </td>
+        <td class="next">
+            <a href="/visual/63?set=none&c=shape2">&#9658;</a>
+        </td>
+    </tr>
+</table>
+        <div id="textHolder"><span id="text">Loading...</span></div>
+        <div onclick="nimja.fullscreen.launch()" id="fullscreen"></div>
+
+<canvas id="canvas" width="100" height="100">Canvas not supported.</canvas>
+<script>
+    var cur = Date.now() - (Math.random() * 100000);
+    //Set up the animation.
+    function animate() {
+        words.update();
+        render.update((Date.now() - cur) / 1000);
+        nimjanimate(animate);
+    }
+    var words = new Words([], 30, 5);
+    config = new Config({"shape":2});
+    
+/**
+ * By Nimja - Negative Shapes
+ * @param {element} canvas
+ * @param {array} colors
+ * @returns {Render}
+ */
+function Render(canvas, colors) {
+    var t = this;
+    this.canvas = canvas;
+    if (video) {
+        canvas.style.mixBlendMode = 'screen';
+    }
+    this.context = t.canvas.getContext('2d');
+    this.colors = colors;
+    this.pos = {x: 0, y: 0, w: 0, h: 0};
+    var defaults = {
+        shape: {type: 'int', val: 3, min: 0, max: 10},
+        ratio: {type: 'float', val: 0, min: 0, max: 1},
+        count: {type: 'int', val: 5, min: 3, max: 10},
+        speed: {type: 'ratio'},
+        depth: {type: 'ratio'},
+        solid: {type: 'bool', val: false},
+        still: {type: 'bool', val: false},
+        square: {type: 'bool', val: false},
+        dir: {type: 'bool', val: false}
+    };
+    this.settings = config.get(defaults);
+    this.totalFrames = t.totalFrames = Math.round((1 / t.settings.speed) * 60);
+    this.drawFrame = t.totalFrames;
+    this.buffer = new Buffer(this.context);
+    this.shape;
+    this.drawer = new Draw(this.colors, this.pos, t.settings);
+    this.update = function (time) {
+        if (t.drawFrame < t.totalFrames) {
+            var cur = t.drawFrame / t.totalFrames;
+            if (t.settings.dir) {
+                cur = 1 - cur;
+            }
+            t.drawer.draw(t.buffer.getContext(t.drawFrame), cur);
+            t.drawFrame++;
+        }
+        t.buffer.drawNextFrame();
+    };
+    this.resize = function (width, height) {
+        t.canvas.width = width;
+        t.canvas.height = height;
+        t.context.lineCap = "round";
+        t.context.lineJoin = "round";
+        t.pos.w = width;
+        t.pos.h = height;
+        t.pos.x = width / 2;
+        t.pos.y = height / 2;
+        t.pos.max = coordMath.distance(t.pos);
+        t.pos.radius = t.pos.max * 2.1;
+        t.pos.thick = t.pos.max * .01;
+        t.drawer.shape = new Shape(t.settings.shape, 1, t.settings.ratio, true);
+        t.buffer.update(t.totalFrames, width, height);
+        t.drawFrame = 0;
+    };
+}
+
+function Draw(colors, pos, settings) {
+    var t = this;
+    this.colors = colors;
+    this.pos = pos;
+    this.settings = settings;
+    this.shape;
+    this.coord3D = new Coord3D(Math.round(t.settings.depth * 100));
+    this.count = t.settings.count;
+    this.step = 1 / t.count;
+    this.draw = function (ctx, cur) {
+        ctx.fillStyle = '#000000';
+        ctx.globalCompositeOperation = "source-over";
+        ctx.fillRect(0, 0, t.pos.w, t.pos.h);
+        if (!t.settings.solid) {
+            ctx.globalCompositeOperation = "lighter";
+        }
+        var maxValue = t.count - 1;
+        for (var i = 0; i < t.count; i++) {
+            var z = i * t.step + cur * t.step;
+            var color = new Color(getIndex(t.colors, 1 - z));
+            var alpha = 1;
+            if (i == 0) {
+                alpha = cur;
+            } else if (i == maxValue) {
+                alpha = 1 - cur;
+            }
+            ctx.fillStyle = color.toRgba(alpha);
+            t.drawPlane(ctx, z);
+            if (i === 0) {
+                ctx.fillStyle = 'rgba(0, 0, 0, ' + (1 - cur) + ')';
+                ctx.fillRect(0, 0, t.pos.w, t.pos.h);
+            }
+        }
+    };
+    this.drawPlaneSquare = function (ctx, z) {
+        ctx.beginPath();
+        var size = t.coord3D.calculate(0, 0, (1 - z) * 1.1 - .1).r;
+        var radius = size * t.pos.radius;
+        var distance = radius * 2;
+        var xSteps = Math.ceil(t.pos.x / radius) + 1,
+            ySteps = Math.ceil(t.pos.y / radius) + 1;
+        ctx.rect(0 - radius, 0 - radius, t.pos.w + radius, t.pos.h + radius);
+        var x, y, xp, yp, angle, offset;
+        for (var ys = -ySteps; ys <= ySteps; ys++) {
+            y = t.pos.y + ys * distance;
+            if (t.isOutOfBounds(t.pos.x, y, radius)) {
+                continue;
+            }
+            offset = 0;
+            if (ys != 0 && !t.settings.still) {
+                offset = ys % 2 == 0 ? z : 1 - z;
+                offset *= distance;
+            }
+            for (var xs = -xSteps; xs <= xSteps; xs++) {
+                x = t.pos.x + xs * distance + offset;
+                if (t.isOutOfBounds(x, y, radius)) {
+                    continue;
+                }
+                xp = x - t.pos.x;
+                yp = y - t.pos.y;
+                angle = (ys == 0 && xs == 0) ?  -HPI : Math.atan2(yp, xp);
+                t.shape.draw(ctx, x, y, angle, false, radius);
+            }
+        }
+        ctx.fill();
+    };
+    this.drawPlaneCircle = function (ctx, z) {
+        ctx.beginPath();
+        var size = t.coord3D.calculate(0, 0, (1 - z) * 1.1 - .1).r;
+        var radius = size * t.pos.radius,
+                steps = Math.ceil(t.pos.max / (radius * 2)) + 1;
+        ctx.rect(0 - radius, 0 - radius, t.pos.w + radius, t.pos.h + radius);
+        for (var step = 0; step < steps; step++) {
+            var curR = step * radius * 2;
+            var max = step == 0 ? 1 : step * 6;
+            var rotation = TAU / max;
+            var offset = rotation;
+            if (!t.settings.still) {
+                offset *= step % 2 == 0 ? z : 1 - z;
+            } else {
+                offset = 0;
+            }
+            for (var a = 0; a < max; a++) {
+                var angle = (step == 0) ? -HPI : -HPI + a * rotation + offset;
+                var x = t.pos.x + curR * Math.cos(angle);
+                var y = t.pos.y + curR * Math.sin(angle);
+                if (t.isOutOfBounds(x, y, curR)) {
+                    continue;
+                }
+                t.shape.draw(ctx, x, y, angle, false, radius);
+            }
+
+        }
+        ctx.fill();
+    };
+    /**
+     * Check if it's within bounds.
+     */
+    this.isOutOfBounds = function (x, y, r) {
+        return x + r < 0 || x - r > t.pos.w || y + r < 0 || y - r > t.pos.h;
+    };
+    this.drawPlane = t.settings.square ? t.drawPlaneSquare : t.drawPlaneCircle;
+}
+
+function Coord3D(scale) {
+    var t = this;
+    this.scale = scale ? scale : 100;
+    /**
+     * Values are from -1..1 or 0..1 for z.
+     * @param {Number} x
+     * @param {Number} y
+     * @param {Number} z
+     * @returns {undefined}
+     */
+    this.calculate = function (x, y, z)
+    {
+        var zAdjust = 1 + z * t.scale;
+        if (zAdjust < 0.0001) {
+            zAdjust = 0.0001;
+        }
+        zAdjust = 1 / zAdjust;
+        return {
+            x: x * zAdjust,
+            y: y * zAdjust,
+            r: zAdjust,
+            r2: Math.pow(zAdjust, 1.2)
+        };
+    };
+}
+    var render = new Render(document.getElementById('canvas'), ["#663311","#653212","#653213","#643215","#643116","#633118","#633119","#62311a","#62301b","#62301d","#61301e","#612f1f","#602f20","#602f21","#5f2f22","#5f2e23","#5e2e24","#5e2e25","#5d2d26","#5d2d27","#5d2d28","#5c2d29","#5c2c2a","#5b2c2b","#5b2c2c","#5a2b2d","#5a2b2e","#592b2f","#592a30","#582a31","#582a32","#572a33","#572934","#562935","#562935","#552836","#552837","#552838","#542739","#54273a","#53273b","#53273b","#52263c","#52263d","#51263e","#51253f","#50253f","#502540","#4f2441","#4f2442","#4e2443","#4e2343","#4d2344","#4d2345","#4c2246","#4c2246","#4b2247","#4b2148","#4a2149","#4a2149","#49204a","#49204b","#48204c","#471f4c","#471f4d","#461f4e","#461e4f","#451e4f","#451d50","#441d51","#441d51","#431c52","#431c53","#421c54","#421b54","#411b55","#401b56","#401a56","#3f1a57","#3f1958","#3e1958","#3e1959","#3d185a","#3d185a","#3c175b","#3b175c","#3b175c","#3a165d","#3a165e","#39155e","#39155f","#381560","#371460","#371461","#361362","#361362","#351263","#341264","#341164","#331165","#331166","#321265","#321365","#321564","#311664","#311863","#311963","#311a62","#301b62","#301d62","#301e61","#2f1f61","#2f2060","#2f2160","#2f225f","#2e235f","#2e245e","#2e255e","#2d265d","#2d275d","#2d285d","#2d295c","#2c2a5c","#2c2b5b","#2c2c5b","#2b2d5a","#2b2e5a","#2b2f59","#2a3059","#2a3158","#2a3258","#2a3357","#293457","#293556","#293556","#283655","#283755","#283855","#273954","#273a54","#273b53","#273b53","#263c52","#263d52","#263e51","#253f51","#253f50","#254050","#24414f","#24424f","#24434e","#23434e","#23444d","#23454d","#22464c","#22464c","#22474b","#21484b","#21494a","#21494a","#204a49","#204b49","#204c48","#1f4c47","#1f4d47","#1f4e46","#1e4f46","#1e4f45","#1d5045","#1d5144","#1d5144","#1c5243","#1c5343","#1c5442","#1b5442","#1b5541","#1b5640","#1a5640","#1a573f","#19583f","#19583e","#19593e","#185a3d","#185a3d","#175b3c","#175c3b","#175c3b","#165d3a","#165e3a","#155e39","#155f39","#156038","#146037","#146137","#136236","#136236","#126335","#126434","#116434","#116533","#116633"], ["#663311","#331166","#116633"]);
+    resize = render.resize;
+    nimja.callResize();
+    nimjanimate(animate);
+</script>
+
+
+    </body>
+</html>
+
+
+
